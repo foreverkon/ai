@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Python Api
-
-**Pages:** 24
-
----
+# Python API
 
 ## Coreform Cubit Python API: Method-Based API
 

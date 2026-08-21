@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Geometry
-
-**Pages:** 167
-
----
+# Geometry
 
 ## ACIS Geometry Kernel
 

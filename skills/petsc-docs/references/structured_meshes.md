@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Structured Meshes
-
-**Pages:** 209
-
----
+# Structured meshes
 
 ## DMCompositeAddDM#
 

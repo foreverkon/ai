@@ -1,6 +1,6 @@
 # Task-oriented reference index
 
-Open the smallest relevant file, then search for the exact routine, option, object type, or heading. The generated documentation files can be large because they preserve full manual-page contracts.
+Open the smallest relevant file, then search for the exact routine, option, object type, or heading. The reference files can be large because they preserve full manual-page contracts.
 
 | Task | Primary reference | Typical searches |
 |---|---|---|
@@ -26,7 +26,6 @@ Open the smallest relevant file, then search for the exact routine, option, obje
 - `api_collectivity.md`: explicit parallel classification for 6,131 routines, including qualified variants.
 - `professional-coding-workflow.md`: evidence-driven implementation sequence.
 - `code-review-checklist.md`: correctness and portability audit.
-- `source.md`: version, provenance, coverage, and extraction limits.
 
 ## Search patterns
 

@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Tutorials
-
-**Pages:** 34
-
----
+# Tutorials
 
 ## CL Basic Tutorial Step 10
 

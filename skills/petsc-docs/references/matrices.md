@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Matrices
-
-**Pages:** 988
-
----
+# Matrices
 
 ## Finite difference computation of Jacobians (MatFD)#
 

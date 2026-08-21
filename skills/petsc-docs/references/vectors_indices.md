@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Vectors Indices
-
-**Pages:** 559
-
----
+# Vectors and index sets
 
 ## Index sets (IS)#
 

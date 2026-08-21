@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Optimization Learning
-
-**Pages:** 477
-
----
+# Optimization and learning
 
 ## ADMM_UPDATE_ADAPTIVE_RELAXED#
 

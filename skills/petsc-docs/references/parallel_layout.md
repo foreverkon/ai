@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Parallel Layout
-
-**Pages:** 115
-
----
+# Parallel layouts
 
 ## AOApplicationToPetscIS#
 

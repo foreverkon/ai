@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Linear Solvers
-
-**Pages:** 933
-
----
+# Linear solvers and preconditioners
 
 ## DMCopyDMKSP#
 

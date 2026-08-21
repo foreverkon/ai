@@ -5,9 +5,8 @@ description: Use the official Coreform Cubit 2026.6 user manual to create, expla
 
 # Work with Coreform Cubit
 
-Ground answers, commands, journals, and scripts in the bundled snapshot of the official Coreform
-Cubit user manual. Preserve the manual's command syntax and page URLs, and account for version
-differences.
+Ground answers, commands, journals, and scripts in the bundled Coreform Cubit 2026.6 user manual.
+Preserve the manual's command syntax and page URLs, and account for version differences.
 
 ## Start with targeted retrieval
 
@@ -75,7 +74,6 @@ prerequisites.
 
 ## Handle version and documentation gaps
 
-- Read `references/source.md` for the captured version and scrape coverage.
 - The bundled manual is v2026.6. For another installed release, verify changed syntax against its
   matching help pages or release notes.
 - Do not silently substitute legacy Sandia CUBIT syntax or behavior.

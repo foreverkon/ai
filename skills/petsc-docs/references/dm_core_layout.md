@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Dm Core Layout
-
-**Pages:** 553
-
----
+# DM core and data layout
 
 ## Data Management (DM)#
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kokkos Docs"
+  short_description: "Source-grounded Kokkos C++ coding guidance"
+  default_prompt: "Use $kokkos-docs to write and verify portable Kokkos C++ against the bundled Programming Guide, API contracts, and use cases."

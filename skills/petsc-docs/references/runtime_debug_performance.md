@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Runtime Debug Performance
-
-**Pages:** 1440
-
----
+# Runtime options, debugging, and performance
 
 ## Additional Information#
 

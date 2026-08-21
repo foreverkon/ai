@@ -28,7 +28,7 @@ Search references instead of loading large files wholesale:
 - Matrix assembly: `rg -n -i "MatSetValues|MatAssemblyBegin|MatAssemblyEnd|ownership range" references/matrices.md`
 - API semantics: `rg -n -i "Fortran Notes|Collective|Logically Collective" references/*.md`
 
-Skill Seekers omits very short synopsis labels from generated manual-page prose. Treat `references/api_collectivity.md` as the local source of truth for `Collective`, `Logically Collective`, `Not Collective`, and qualified variants, then read the full subsystem reference for the rest of the contract.
+Verify `Collective`, `Logically Collective`, `Not Collective`, and qualified variants in `references/api_collectivity.md`, then read the full subsystem reference for the rest of the contract.
 
 When a symbol occurs in both the user guide and a manual page, use the user guide for workflow and the manual page for the exact contract. Preserve the manual-page URL in explanations when the user asks for sources.
 
@@ -46,13 +46,11 @@ When a symbol occurs in both the user guide and a manual page, use the user guid
 
 ## Resolve ambiguity
 
-- Distinguish API availability in the captured 3.25.4 release from older or development versions.
+- Distinguish API availability in PETSc 3.25.4 from older or development versions.
 - Distinguish C API, Fortran interface notes, and petsc4py; this skill is centered on C and Fortran.
-- If a routine contract is absent or contradictory in the local snapshot, say so and consult the live official release manual page rather than improvising.
+- If a routine contract is absent or contradictory in the bundled references, say so and consult the live official release manual page rather than improvising.
 - For performance advice, separate correctness requirements from workload- and machine-dependent tuning.
 
 ## Reference map
 
 Use `references/index.md` for task routing. The principal groups are orientation and tutorials; program structure; vectors and indices; matrices; linear, nonlinear, time-integration, and optimization solvers; DM and meshes; discretization; parallel layouts; I/O and visualization; runtime options, debugging, and performance.
-
-`references/source.md` records provenance, scope, version, and extraction limits.

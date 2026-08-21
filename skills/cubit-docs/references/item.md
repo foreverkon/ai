@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Item
-
-**Pages:** 18
-
----
+# ITEM workflows
 
 ## Blend Surfaces
 

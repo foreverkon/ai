@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Io Visualization
-
-**Pages:** 435
-
----
+# I/O and visualization
 
 ## Graphics (Draw)#
 

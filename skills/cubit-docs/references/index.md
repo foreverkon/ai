@@ -1,7 +1,7 @@
 # Coreform Cubit reference index
 
-The references contain 515 pages from the official v2026.6 manual, grouped by Skill Seekers into
-10 category files. Each source page begins with a level-two heading and its official URL.
+The official v2026.6 manual is organized into 10 topic files. Each page begins with a level-two
+heading and its official URL.
 
 ## Task routing
 

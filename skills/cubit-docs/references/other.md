@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Other
-
-**Pages:** 1
-
----
+# Credits
 
 ## Credits
 

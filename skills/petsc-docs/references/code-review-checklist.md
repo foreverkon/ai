@@ -2,7 +2,7 @@
 
 ## API accuracy
 
-- Every symbol exists in the captured PETSc release.
+- Every symbol exists in the PETSc 3.25.4 references.
 - Headers/modules, signatures, callback types, enum constants, and format specifiers match the documented interface.
 - C error propagation or Fortran error handling follows current PETSc guidance.
 - No petsc4py convention has leaked into C or Fortran code.
@@ -43,4 +43,3 @@
 - Explain the PETSc object lifecycle and parallel semantics that are easy to misuse.
 - Point to exact local reference sections or official URLs for non-obvious API claims.
 - Do not claim compilation, execution, convergence, or scaling results that were not observed.
-

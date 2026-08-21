@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Reference
-
-**Pages:** 17
-
----
+# Command and feature reference
 
 ## Alpha Commands
 

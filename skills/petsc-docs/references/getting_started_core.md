@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Getting Started Core
-
-**Pages:** 10
-
----
+# Getting started and program structure
 
 ## Checking the PETSc version#
 

@@ -1,11 +1,6 @@
 # API collectivity index
 
-This index restores the short collectivity labels that appear immediately after the synopsis on official PETSc manual pages but are omitted by paragraph-length filtering in Skill Seekers 3.9.1. Use the linked full entry for qualifiers and argument semantics.
-
-- Manual-page URLs inspected: 8,378
-- Entries with an explicit collectivity label: 6,131
-- Pages without a synopsis collectivity label (primarily types, constants, and indexes): 2,247
-- Fetch failures after retries: 0
+Use this index to verify the short collectivity label shown after a PETSc manual-page synopsis. Read the linked full entry for qualifiers and argument semantics.
 
 ## AO
 

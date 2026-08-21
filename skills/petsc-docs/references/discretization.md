@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Discretization
-
-**Pages:** 574
-
----
+# Discretization
 
 ## Defining your own mathematical functions (PF)#
 

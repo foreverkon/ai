@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Introduction
-
-**Pages:** 8
-
----
+# Introduction, installation, and licensing
 
 ## Coreform Cubit Support
 

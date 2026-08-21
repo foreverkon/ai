@@ -5,8 +5,8 @@ description: Use the official nekRS documentation to install and build nekRS, cr
 
 # Work with nekRS
 
-Ground answers and edits in the bundled snapshot of the official `Nek5000/nekRS_doc`
-repository. Treat the references as authoritative for this snapshot, but account for version drift.
+Ground answers and edits in the bundled official nekRS documentation. Treat the references as
+authoritative for the documented version, but account for version drift.
 
 ## Start here
 
@@ -61,8 +61,8 @@ rg -n -i "search term" references/documentation references/examples
 
 ## Handle uncertainty and freshness
 
-- Read `references/source.md` for the exact documentation snapshot.
-- If the installed nekRS version differs, say so and check its `RELEASE.md`, `nrsman`, or matching
+- The bundled quickstart documents nekRS v26.0 commands. If the installed version differs, say so
+  and check its `RELEASE.md`, `nrsman`, or matching
   versioned docs before giving exact commands or parameters.
 - If the bundled docs do not support a claim, state the gap. Consult the official nekRS repository
   or documentation when current external access is available.

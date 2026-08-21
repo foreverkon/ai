@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Fe Model
-
-**Pages:** 16
-
----
+# Finite-element model definition
 
 ## Boundary Condition Sets
 

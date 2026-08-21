@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Tutorials Examples
-
-**Pages:** 8
-
----
+# Tutorials and examples
 
 ## Guide to the Stokes Equations using Finite Elements#
 

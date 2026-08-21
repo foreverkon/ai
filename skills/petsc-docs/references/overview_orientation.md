@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Overview Orientation
-
-**Pages:** 12
-
----
+# PETSc overview and orientation
 
 ## GPU Support Roadmap#
 

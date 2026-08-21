@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Other
-
-**Pages:** 5
-
----
+# Additional PETSc topics
 
 ## About This Manual#
 

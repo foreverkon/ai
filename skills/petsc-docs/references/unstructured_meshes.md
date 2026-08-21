@@ -1,8 +1,4 @@
-# Petsc-Docs-Full-Raw - Unstructured Meshes
-
-**Pages:** 878
-
----
+# Unstructured meshes
 
 ## A Forest of Trees and Structured Adaptive Refinement (DMFOREST)#
 

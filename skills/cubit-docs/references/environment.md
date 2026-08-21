@@ -1,8 +1,4 @@
-# Coreform-Cubit-Docs-Skill_Docs - Environment
-
-**Pages:** 91
-
----
+# Environment and workflow
 
 ## APREPRO Journaling
 
