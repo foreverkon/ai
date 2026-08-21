@@ -1,0 +1,4 @@
+interface:
+  display_name: "PETSc Docs"
+  short_description: "Official PETSc C and Fortran programming guidance"
+  default_prompt: "Use $petsc-docs-skill to implement and verify this PETSc C or Fortran workflow against the official release documentation."

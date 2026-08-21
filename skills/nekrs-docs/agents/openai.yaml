@@ -1,0 +1,4 @@
+interface:
+  display_name: "NekRS Docs"
+  short_description: "Official nekRS setup and simulation guidance"
+  default_prompt: "Use $nekrs-docs to configure and troubleshoot this nekRS case using the bundled official documentation."

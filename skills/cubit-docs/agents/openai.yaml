@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coreform Cubit Docs"
+  short_description: "Official Cubit commands, meshing, and Python guidance"
+  default_prompt: "Use $cubit-docs to create and verify a Coreform Cubit workflow from the official v2026.6 manual."
