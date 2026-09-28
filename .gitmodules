@@ -1,0 +1,21 @@
+[submodule "skills/no-negative-echo"]
+	path = skills/no-negative-echo
+	url = https://github.com/LB623/no-negative-echo.git
+[submodule "skills/anti-defensive-writing"]
+	path = skills/anti-defensive-writing
+	url = https://github.com/Kiterlin/anti-defensive-writing.git
+[submodule "skills/stop-that-shit"]
+	path = skills/stop-that-shit
+	url = https://github.com/lennney/stop-that-shit.git
+[submodule "skills/stop-slop"]
+	path = skills/stop-slop
+	url = https://github.com/hardikpandya/stop-slop.git
+[submodule "skills/humanizer"]
+	path = skills/humanizer
+	url = https://github.com/blader/humanizer.git
+[submodule "skills/humanizer-zh"]
+	path = skills/humanizer-zh
+	url = https://github.com/op7418/humanizer-zh.git
+[submodule "skills/academic-humanizer"]
+	path = skills/academic-humanizer
+	url = https://github.com/AIScientists-Dev/academic-humanizer.git
