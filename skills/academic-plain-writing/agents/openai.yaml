@@ -1,0 +1,4 @@
+interface:
+  display_name: "学术语言"
+  short_description: "润色中英文学术文字，去除黑话和套话，调整标点衔接，保留术语与证据强度"
+  default_prompt: "使用 $academic-plain-writing 润色这段论文，直接交付修改后的正文。"
