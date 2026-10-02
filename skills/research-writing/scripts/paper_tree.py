@@ -5,10 +5,12 @@ Python standard library only. A linter is not a scientific reviewer or an identi
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import sys
 from datetime import datetime, timezone
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 LEVELS = {'architecture': {'paper', 'section', 'subsection'},
           'paragraphs': {'paper', 'section', 'subsection', 'paragraph'},
@@ -19,7 +21,7 @@ RELATIONS = {'introduce', 'elaborate', 'support', 'contrast', 'consequence', 'qu
 CLAIMS = {'observation', 'method', 'inference', 'hypothesis', 'definition', 'background', 'transition'}
 STATES = {'unassessed', 'located', 'missing', 'conflicting'}
 MODES = {'compose', 'reverse-analysis'}
-NONPLAN = {'prose', 'evidence', 'evidence_state', 'claim_type', 'tasks', 'numeric_facts',
+NONPLAN = {'prose', 'blocks', 'evidence', 'evidence_state', 'claim_type', 'tasks', 'numeric_facts',
            'execution', 'status', 'notes'}
 HEADER = re.compile(r'^(#{1,6}) \[([A-Za-z][A-Za-z0-9_-]*)\] (.+)$')
 
@@ -47,13 +49,47 @@ NODE_DATA = {'depends_on', 'uses', 'introduces', 'relation', 'claim_type',
              'status', 'notes'}
 PROJECT_DATA = {'mode', 'language', 'maturity', 'basis', 'known_terms', 'node_data'}
 
-def draft_data(path, known_ids):
-    """Read only filled sentence entries; the tree remains an intention outline."""
+BLOCK_START = re.compile(r'^<!-- block ([A-Za-z][A-Za-z0-9_-]*) type=(equation|figure|table) after=([A-Za-z][A-Za-z0-9_-]*) -->$')
+IMAGE = re.compile(r'!\[[^\]\n]*\]\((<[^>\n]+>|[^\s)]+)(\s+[^)]+)?\)')
+
+def local_images(content, parent):
+    for match in IMAGE.finditer(content):
+        target = match[1].strip('<>')
+        parts = urlsplit(target)
+        if not parts.scheme and not parts.netloc and parts.path:
+            yield Path(parent) / unquote(parts.path)
+
+def read_draft(path, known_ids):
+    """Read sentence prose and ordered, sentence-anchored Markdown blocks."""
     path = Path(path)
     if not path.exists():
-        return {}
-    sentences, current = {}, None
+        return {}, []
+    sentences, blocks, block_ids, current, active = {}, [], set(), None, None
     for line_no, line in enumerate(path.read_text(encoding='utf-8-sig').splitlines(), 1):
+        if active is not None:
+            if line == '<!-- /block -->':
+                content = '\n'.join(active.pop('_lines')).strip('\n')
+                if not content.strip():
+                    raise ValueError('Empty draft block ' + active['id'])
+                active['content'] = content
+                blocks.append(active)
+                active, current = None, None
+            elif BLOCK_START.fullmatch(line):
+                raise ValueError(f'Nested draft block at line {line_no}')
+            else:
+                active['_lines'].append(line)
+            continue
+        block = BLOCK_START.fullmatch(line)
+        if block:
+            bid, kind, anchor = block.groups()
+            if bid in block_ids or bid in known_ids:
+                raise ValueError('Duplicate/conflicting draft block ID: ' + bid)
+            if anchor not in sentences:
+                raise ValueError('Draft block must follow a filled sentence: ' + anchor)
+            block_ids.add(bid)
+            active = {'id': bid, 'type': kind, 'after': anchor, '_lines': []}
+            current = None
+            continue
         match = SENTENCE.fullmatch(line)
         if match:
             nid, prose = match.groups()
@@ -70,7 +106,13 @@ def draft_data(path, known_ids):
             sentences[current] += ' ' + line.strip()
         else:
             raise ValueError(f'Draft must use - [S-ID] prose entries at line {line_no}')
-    return sentences
+    if active is not None:
+        raise ValueError('Unclosed draft block: ' + active['id'])
+    return sentences, blocks
+
+def draft_data(path, known_ids):
+    """Compatibility API: return sentence prose only."""
+    return read_draft(path, known_ids)[0]
 
 def parse(path, project=None, draft=None):
     path = Path(path)
@@ -147,9 +189,13 @@ def parse(path, project=None, draft=None):
             raise ValueError('Invalid node_data fields for ' + nid + '; tree identity and intentions stay in Markdown')
         lookup[nid].update(fields)
     draft_path = Path(draft) if draft else path.with_name('draft.md')
-    prose = draft_data(draft_path, {n['id'] for n in nodes if n['kind'] == 'sentence'})
+    prose, blocks = read_draft(draft_path, {n['id'] for n in nodes if n['kind'] == 'sentence'})
+    if any(block['id'] in lookup for block in blocks):
+        raise ValueError('Draft block IDs must differ from tree IDs')
     for nid, text in prose.items():
         lookup[nid]['prose'] = text
+    for block in blocks:
+        lookup[block['after']].setdefault('blocks', []).append(block)
     return {'path': path, 'raw': raw, 'meta': meta, 'nodes': nodes,
             'project_path': project_path, 'draft_path': draft_path}
 
@@ -294,7 +340,7 @@ def projected_nodes(doc, scope, level, stage='outline'):
     def project(n):
         return {k: v for k, v in n.items() if not k.startswith('_') and
                 (k not in NONPLAN or (stage == 'draft' and k in
-                 {'prose', 'evidence', 'evidence_state', 'claim_type', 'numeric_facts'}))}
+                 {'prose', 'blocks', 'evidence', 'evidence_state', 'claim_type', 'numeric_facts'}))}
     return {'nodes': [project(n) for n in selected],
             'context': [project(n) for n in doc['nodes'] if n['id'] in contextual and n['id'] not in selected_ids]}
 
@@ -378,12 +424,59 @@ def evidence_data(doc, path=None):
         raise ValueError('Duplicate evidence IDs')
     return path, {x['id']: x for x in items}
 
+def adjacent_nodes(doc, scope):
+    """Immediate sibling roots at the chosen scope, not unrelated branches."""
+    lookup = index(doc)
+    siblings = [n for n in doc['nodes'] if n.get('parent') == lookup[scope].get('parent')]
+    position = next(i for i, n in enumerate(siblings) if n['id'] == scope)
+    return siblings[max(0, position - 1):position] + siblings[position + 1:position + 2]
+
+def audit_projection(doc, scope, level, stage):
+    # Human planning receipts intentionally retain projected_nodes semantics.
+    # Evaluation additionally binds the neighboring argument being assessed.
+    content_level = 'sentences' if stage == 'draft' else level
+    projection = projected_nodes(doc, scope, content_level, stage)
+    present = {n['id'] for n in projection['nodes'] + projection['context']}
+    for neighbor in adjacent_nodes(doc, scope):
+        extra = projected_nodes(doc, neighbor['id'], content_level, stage)
+        for n in extra['nodes'] + extra['context']:
+            if n['id'] not in present:
+                projection['context'].append(n)
+                present.add(n['id'])
+    order = {n['id']: i for i, n in enumerate(doc['nodes'])}
+    projection['context'].sort(key=lambda n: order[n['id']])
+    return projection
+
+def protect_output(doc, out, evidence=None, reviews=None, audit=None, review_write=False):
+    """Reject aliases of authoritative inputs before creating or writing output."""
+    target = Path(out)
+    protected = [doc['path'], doc['project_path'], doc['draft_path']]
+    registry, records = evidence_data(doc, evidence)
+    protected.append(registry)
+    protected.extend(registry.parent / row['path'] for row in records.values() if row.get('path'))
+    protected.extend(doc['path'].parent / value for value in doc['meta'].get('basis', [])
+                     if Path(value).is_absolute() or not urlsplit(value).scheme)
+    for n in doc['nodes']:
+        for block in n.get('blocks', []):
+            protected.extend(local_images(block['content'], doc['draft_path'].parent))
+    if not review_write:
+        protected.extend([doc['path'].with_name('reviews.json'),
+                          doc['path'].parent / 'review' / 'reviews.json',
+                          doc['path'].parent.parent / 'review' / 'reviews.json'])
+        if reviews:
+            protected.append(Path(reviews))
+    if audit:
+        protected.append(Path(audit))
+    for source in protected:
+        if target.resolve() == source.resolve() or (target.exists() and source.exists() and target.samefile(source)):
+            raise ValueError('Output would overwrite an input: ' + str(source))
+
 def binding(doc, stage, level, scope, evidence=None):
     if stage == 'draft':
         path, records = evidence_data(doc, evidence)
     else:
         path, records = doc['path'].with_name('evidence.json'), {}
-    projection = projected_nodes(doc, scope, level, stage)
+    projection = audit_projection(doc, scope, level, stage)
     referenced = {eid for n in projection['nodes'] + projection['context'] for eid in n.get('evidence', [])}
     records = {eid: item for eid, item in records.items() if eid in referenced}
     local = {}
@@ -392,8 +485,12 @@ def binding(doc, stage, level, scope, evidence=None):
             if item.get('path'):
                 source = path.parent / item['path']
                 local[eid] = digest(source.read_bytes()) if source.is_file() else None
+        for n in projection['nodes'] + projection['context']:
+            for block in n.get('blocks', []):
+                for source in local_images(block['content'], doc['draft_path'].parent):
+                    local['block:' + block['id'] + ':' + str(source.resolve())] = digest(source.read_bytes()) if source.is_file() else None
     meta = context_meta(doc, projection)
-    return {'binding_version': 2,
+    return {'binding_version': 3,
             'scope_sha256': digest(canonical({'meta': meta, **projection}).encode('utf-8')),
             'stage': stage, 'level': level, 'scope': scope,
             'evidence_registry_sha256': digest(canonical(records).encode('utf-8')) if stage == 'draft' else None,
@@ -403,7 +500,7 @@ def evidence_checks(doc, scope, evidence=None):
     path, records = evidence_data(doc, evidence)
     errors, eligible, traceable = [], 0, 0
     for n in descendants(doc, scope):
-        if n.get('kind') != 'sentence' or not n.get('prose') or n.get('claim_type') == 'transition':
+        if n.get('kind') != 'sentence' or not n.get('prose') or (n.get('claim_type') == 'transition' and not n.get('blocks')):
             continue
         eligible += 1
         refs = n.get('evidence', [])
@@ -430,8 +527,13 @@ def evidence_checks(doc, scope, evidence=None):
                 elif digest(source.read_bytes()) != item['sha256']:
                     errors.append(issue('stale_artifact', n['id'], 'Local source changed since registration: ' + eid))
         for fact in n.get('numeric_facts', []):
-            if not isinstance(fact, dict) or not isinstance(fact.get('literal'), str) or fact['literal'] not in n['prose'] or fact.get('evidence') not in refs or not fact.get('locator'):
+            content = n['prose'] + '\n' + '\n'.join(b['content'] for b in n.get('blocks', []))
+            if not isinstance(fact, dict) or not isinstance(fact.get('literal'), str) or fact['literal'] not in content or fact.get('evidence') not in refs or not fact.get('locator'):
                 errors.append(issue('numeric_mapping', n['id'], 'Invalid declared numeric-fact mapping', 'major'))
+        for block in n.get('blocks', []):
+            for source in local_images(block['content'], doc['draft_path'].parent):
+                if not source.is_file():
+                    errors.append(issue('missing_block_asset', n['id'], 'Missing local image in ' + block['id'] + ': ' + str(source)))
         if len(errors) == before:
             traceable += 1
     return errors, {'numerator': traceable, 'denominator': eligible, 'rate': traceable / eligible if eligible else None,
@@ -440,16 +542,19 @@ def evidence_checks(doc, scope, evidence=None):
 def audit_units(doc, stage, level, scope):
     selected = [n for n in descendants(doc, scope) if n.get('kind') in LEVELS[level]]
     units, children = [], {}
-    def add(dim, key, ids):
-        units.append({'key': dim + ':' + key, 'dimension': dim, 'nodes': ids,
+    def add(dim, key, ids, block=None):
+        unit = {'key': dim + ':' + key, 'dimension': dim, 'nodes': ids,
                       'score': None, 'quote': '', 'reason': '',
-                      'consequence': '', 'repair': '', 'close_criterion': ''})
+                      'consequence': '', 'repair': '', 'close_criterion': ''}
+        if block:
+            unit['block'] = block
+        units.append(unit)
     for n in selected:
         children.setdefault(n.get('parent'), []).append(n)
     if stage == 'outline':
         for n in selected:
             add('specificity', n['id'], [n['id']])
-            if n['id'] != scope:
+            if n.get('parent') is not None:
                 add('parent_fit', n['id'], [n['parent'], n['id']])
             if n['kind'] == 'paragraph' or (n['kind'] in ('section', 'subsection') and n['id'] not in children):
                 add('focus', n['id'], [n['id']])
@@ -466,15 +571,43 @@ def audit_units(doc, stage, level, scope):
                 if n.get('claim_type') != 'transition':
                     add('evidence_fit', n['id'], [n['id']])
                     add('strength', n['id'], [n['id']])
-            if n['kind'] == 'paragraph' and any(x.get('prose') for x in children.get(n['id'], [])):
+            if n['kind'] == 'paragraph' and written_content(doc, n['id']):
                 add('economy', n['id'], [n['id']])
+        # Blocks remain reviewable at coarse paragraph/architecture levels;
+        # their current body and inherited evidence cannot disappear from scope.
+        for n in descendants(doc, scope):
+            for block in n.get('blocks', []):
+                for dimension in ('realization', 'terminology', 'evidence_fit', 'strength'):
+                    add(dimension, block['id'], [n['id']], block['id'])
         for siblings in children.values():
             for a, b in zip(siblings, siblings[1:]):
                 if a['kind'] == 'sentence' and b['kind'] == 'sentence' and a.get('prose') and b.get('prose'):
                     add('reader_flow', a['id'] + '->' + b['id'], [a['id'], b['id']])
-                elif a['kind'] == 'paragraph' and b['kind'] == 'paragraph' and any(x.get('prose') for x in children.get(a['id'], [])) and any(x.get('prose') for x in children.get(b['id'], [])):
+                elif a['kind'] == b['kind'] and a['kind'] in ('paragraph', 'section', 'subsection') and written_content(doc, a['id']) and written_content(doc, b['id']):
                     add('reader_flow', a['id'] + '->' + b['id'], [a['id'], b['id']])
+    neighbors = adjacent_nodes(doc, scope)
+    order = {n['id']: i for i, n in enumerate(doc['nodes'])}
+    for neighbor in neighbors:
+        ids = sorted([scope, neighbor['id']], key=lambda nid: order[nid])
+        if stage == 'outline':
+            add('sequence', '->'.join(ids), ids)
+        elif all(written_content(doc, nid) for nid in ids):
+            add('reader_flow', '->'.join(ids), ids)
     return units
+
+def written_content(doc, nid):
+    """Current prose/block anchors, including the descendants of branch targets."""
+    return [text for n in descendants(doc, nid)
+            for text in ([n.get('prose', '')] + [b['content'] for b in n.get('blocks', [])]) if text]
+
+def audit_anchors(doc, stage, unit):
+    lookup = index(doc)
+    if unit.get('block'):
+        return [b['content'] for nid in unit['nodes'] for b in lookup[nid].get('blocks', [])
+                if b['id'] == unit['block']]
+    if stage == 'draft':
+        return [text for nid in unit['nodes'] for text in written_content(doc, nid)]
+    return [str(lookup[nid].get(field, '')) for nid in unit['nodes'] for field in ('intent', 'logic')]
 
 def evaluate(doc, stage, level, scope, audit=None, evidence=None):
     errors = validate(doc, level, scope)
@@ -512,7 +645,7 @@ def evaluate(doc, stage, level, scope, audit=None, evidence=None):
                     continue
                 seen.add(key)
                 unit = expected_map[key]
-                if row.get('dimension') != unit['dimension'] or row.get('nodes') != unit['nodes']:
+                if row.get('dimension') != unit['dimension'] or row.get('nodes') != unit['nodes'] or row.get('block') != unit.get('block'):
                     errors.append(issue('audit_target', key, 'Assessment must retain exact unit target'))
                     continue
                 score = row.get('score')
@@ -523,7 +656,7 @@ def evaluate(doc, stage, level, scope, audit=None, evidence=None):
                         'PDF-only reverse analysis leaves scientific evidence_fit and strength unassessed', 'major'))
                     continue
                 quote = row.get('quote', '')
-                anchors = [str(index(doc)[nid].get(field, '')) for nid in unit['nodes'] for field in ('intent', 'logic', 'prose')]
+                anchors = audit_anchors(doc, stage, unit)
                 if type(score) is not int or score not in range(4) or not isinstance(row.get('reason'), str) or not row['reason'].strip() or not isinstance(quote, str) or not quote.strip() or not any(quote in anchor for anchor in anchors):
                     errors.append(issue('audit_anchor', key, 'Score 0..3, specific reason and exact intention/prose quote required'))
                     continue
@@ -564,6 +697,7 @@ def evaluate(doc, stage, level, scope, audit=None, evidence=None):
             'limitations': 'Deterministic checks establish bookkeeping, not scientific support. Semantic ratings are reviewer judgments. Grade thresholds require calibration.'}
 
 def export(doc, out, reviews, audit=None, evidence=None, incomplete=False, scope=None):
+    protect_output(doc, out, evidence, reviews, audit)
     if mode(doc) == 'reverse-analysis':
         raise ValueError('Reverse analysis is read-only: manuscript export is unavailable')
     scope = scope or (doc['nodes'][0]['id'] if doc['nodes'] else '')
@@ -597,6 +731,19 @@ def export(doc, out, reviews, audit=None, evidence=None, incomplete=False, scope
                 paragraph.append(n['prose'])
             elif incomplete:
                 paragraph.append('[OPEN INTENT ' + n['id'] + ']')
+            for block in n.get('blocks', []):
+                flush()
+                def rebase_image(match):
+                    target = match[1].strip('<>')
+                    parts = urlsplit(target)
+                    if parts.scheme or parts.netloc or not parts.path:
+                        return match[0]
+                    source = (doc['draft_path'].parent / unquote(parts.path)).resolve()
+                    relative = Path(os.path.relpath(source, Path(out).resolve().parent)).as_posix()
+                    rebased = urlunsplit(('', '', relative, parts.query, parts.fragment))
+                    start, end = match.start(1) - match.start(), match.end(1) - match.start()
+                    return match[0][:start] + '<' + rebased + '>' + match[0][end:]
+                result.extend([IMAGE.sub(rebase_image, block['content']), ''])
     flush()
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text('\n'.join(result).rstrip() + '\n', encoding='utf-8')
@@ -690,6 +837,7 @@ def main():
         elif args.command == 'gate':
             result = gate(doc, args.reviews, scope)
         elif args.command == 'review':
+            protect_output(doc, args.reviews, reviews=args.reviews, review_write=True)
             if mode(doc) == 'reverse-analysis':
                 raise ValueError('Reverse analysis is read-only: human composition approval cannot be recorded')
             errors = validate(doc, args.level, scope)
@@ -705,6 +853,7 @@ def main():
             write_json(args.reviews, data)
             result = {'recorded': row, 'notice': 'Recording is not identity authentication; do not fabricate feedback.'}
         elif args.command == 'audit-template':
+            protect_output(doc, args.out, args.evidence)
             errors = validate(doc, args.level, scope)
             if errors:
                 raise ValueError('Cannot assess malformed level: ' + canonical(errors))
@@ -714,6 +863,7 @@ def main():
             write_json(args.out, result)
             result = {'out': args.out, 'units': len(result['units']), 'notice': 'Fill by actual semantic inspection; null is unassessed.'}
         elif args.command == 'evaluate':
+            protect_output(doc, args.out, args.evidence, audit=args.audit)
             result = evaluate(doc, args.stage, args.level, scope, args.audit, args.evidence)
             write_json(args.out, result)
         else:

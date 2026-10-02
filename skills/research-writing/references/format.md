@@ -42,6 +42,26 @@ ID保持稳定：根为`P`；章节建议`SEC-`，小节`SUB-`，段落用`PAR-`
 
 正文保存在与树同目录的`draft.md`：`- [S-R01] Actual English sentence.`。按段落组织，可加段落标题；写过的句子才出现，长句可以缩进续行。与树共享ID，不复制意图。工具按树的段落顺序将这些句子拼成普通`output/manuscript.md`，这是派生阅读稿。
 
+独立公式、图片与图注、表格也写在`draft.md`，用块标记定位到某个已填写句子之后。块 ID 保持稳定，`type` 为`equation`、`figure`或`table`；块内保留普通 Markdown 与换行。图注属于图块，图中的科学内容由相应句子意图引出或解释。
+
+```markdown
+- [S-R01] The disturbance energy is defined as follows.
+<!-- block EQ-01 type=equation after=S-R01 -->
+$$
+E = \frac{1}{2}\int_\Omega |\boldsymbol{u}'|^2\,\mathrm{d}\Omega.
+$$
+<!-- /block -->
+
+- [S-R02] The growth rates cross at the transition point shown in figure 1.
+<!-- block FIG-01 type=figure after=S-R02 -->
+![Growth rates of the competing modes](../figures/FIG-01/figure.png)
+
+Figure 1. Growth rates of the competing modes as the control parameter varies.
+<!-- /block -->
+```
+
+表格使用同样的标记，例如`<!-- block TAB-01 type=table after=S-R03 -->`，块内写完整 Markdown 表格。块 ID 不与树节点 ID 重复。块不增加意图层级；导出时去掉定位标记，按锚定句子的位置插入内容并保留换行。图片路径以`draft.md`所在目录为基准，导出时按输出目录重算相对路径。
+
 需要工具状态时才创建同目录`project.json`。可记录`mode`（`compose`或`reverse-analysis`）、`language`、`maturity`、研究`basis`；`node_data`按ID记录必要的依赖、术语或填写阶段证据。默认compose、英文、developing，构树不要求先填写状态。
 
 已有论文可在根概述之前放一行`[原文](DOI链接)`，工具据此默认采用reverse-analysis。实际任务明确为新稿时，在project.json指定compose。
